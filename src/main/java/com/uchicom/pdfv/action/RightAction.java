@@ -3,15 +3,12 @@ package com.uchicom.pdfv.action;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 import javax.swing.AbstractAction;
-import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.PDFRenderer;
 
 import com.uchicom.pdfv.Constants;
 import com.uchicom.pdfv.ViewFrame;
@@ -38,23 +35,23 @@ public class RightAction extends AbstractAction {
 		// PDFドキュメントをロード
 		PDDocument document = null;
 		try {
-			document = PDDocument.load(component.getCurrentFile());
-			int newPage = component.getCurrentPage() + 1;
-			if (newPage < document.getNumberOfPages() - 1) {
-				component.setCurrentPage(newPage);
-			}
-
-			// ページのリストから最初の1ページを取得する
-			PDFRenderer pdfRenderer = new PDFRenderer(document);
-			int pageCount = document.getNumberOfPages();
-			// note that the page number parameter is zero based
-			BufferedImage image = pdfRenderer.renderImage(component.getCurrentPage());
-			BufferedImage image2 = pdfRenderer.renderImage(component.getCurrentPage() + 1);
-			BufferedImage image3 = pdfRenderer.renderImage(component.getCurrentPage() + 2);
-			component.setImages(new BufferedImage[]{image, image2, image3});
-		} catch (IOException e1) {
-			e1.printStackTrace();
-			JOptionPane.showMessageDialog(component, e1.getMessage());
+//			document = PDDocument.load(component.getCurrentFile());
+//			int newPage = component.getCurrentPage() + 1;
+//			if (newPage < document.getNumberOfPages() - 1) {
+//				component.setCurrentPage(newPage);
+//			}
+//
+//			// ページのリストから最初の1ページを取得する
+//			PDFRenderer pdfRenderer = new PDFRenderer(document);
+//			int pageCount = document.getNumberOfPages();
+//			// note that the page number parameter is zero based
+//			BufferedImage image = pdfRenderer.renderImage(component.getCurrentPage());
+//			BufferedImage image2 = pdfRenderer.renderImage(component.getCurrentPage() + 1);
+//			BufferedImage image3 = pdfRenderer.renderImage(component.getCurrentPage() + 2);
+//			component.setImages(new BufferedImage[]{image, image2, image3});
+//		} catch (IOException e1) {
+//			e1.printStackTrace();
+//			JOptionPane.showMessageDialog(component, e1.getMessage());
 		} finally {
 			if (document != null) {
 				try {

@@ -60,30 +60,14 @@ public class ResourceUtil {
 	//初期化処理.
 	static {
 		//プロパティ処理
-		FileInputStream fi = null;
-		try {
-			String jarPath = System.getProperty("java.class.path");
-			String dirPath = jarPath.substring(0, jarPath.lastIndexOf(File.separator)+1);
-			File file = new File(dirPath + "config.properties");
-			if (!file.exists()) {
-				file.createNewFile();
-			}
-			fi = new FileInputStream(file);
-			properties.load(fi);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			if (fi != null) {
-				try {
-					fi.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+		File file = new File("conf/pdfv.properties");
+		if (file.exists()) {
+			try (FileInputStream fi = new FileInputStream(file)){
+				properties.load(fi);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 	}

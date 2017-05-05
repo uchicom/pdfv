@@ -10,6 +10,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -19,7 +20,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileFilter;
 
+import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
@@ -41,19 +44,18 @@ import com.uchicom.pdfv.util.ResourceUtil;
  */
 public class ViewFrame extends JFrame {
 
-	/**
-	 *
-	 */
-	private static final long serialVersionUID = 1L;
+	private ImagePanel panel;
+	private JSlider slider;
+
 	public ViewFrame() {
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		initComponents();
 	}
-	ImagePanel panel;
-	JSlider slider;
 	private void initComponents() {
 		setTitle(ResourceUtil.getString(Constants.APPLICATION_TITLE) + " "
 				+ ResourceUtil.getString(Constants.APPLICATION_VERSION));
+
+
 		setJMenuBar(createJMenuBar());
 		panel = new ImagePanel();
 		panel.addMouseWheelListener(new MouseWheelListener() {
@@ -83,40 +85,8 @@ public class ViewFrame extends JFrame {
 
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				// TODO Auto-generated method stub
-				// PDFドキュメントをロード
-				PDDocument document = null;
-				try {
-					document = PDDocument.load(ViewFrame.this.getCurrentFile());
-					int newPage = slider.getValue();
-					if (newPage < document.getNumberOfPages() - 1) {
-						ViewFrame.this.setCurrentPage(newPage);
-						// ページのリストから最初の1ページを取得する
-						PDFRenderer pdfRenderer = new PDFRenderer(document);
-						int pageCount = document.getNumberOfPages();
-						// note that the page number parameter is zero based
-						BufferedImage image = pdfRenderer.renderImage(ViewFrame.this.getCurrentPage());
-						BufferedImage image2 = pdfRenderer.renderImage(ViewFrame.this.getCurrentPage() + 1);
-						BufferedImage image3 = pdfRenderer.renderImage(ViewFrame.this.getCurrentPage() + 2);
-						ViewFrame.this.setImages(new BufferedImage[]{image, image2, image3});
-					}
-					ViewFrame.this.setOffset(slider.getValue() % 1);
-
-
-				} catch (IOException e1) {
-					e1.printStackTrace();
-					JOptionPane.showMessageDialog(ViewFrame.this, e1.getMessage());
-				} finally {
-					if (document != null) {
-						try {
-							document.close();
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						} finally {
-							document = null;
-						}
-					}
-				}
+				int newPage = slider.getValue();
+				panel.setCurrentPage(newPage);
 			}
 
 		});
@@ -125,6 +95,7 @@ public class ViewFrame extends JFrame {
 		getContentPane().add(new JScrollPane(panel), BorderLayout.CENTER);
 		getContentPane().add(slider, BorderLayout.SOUTH);
 		setPreferredSize(new Dimension(100, 100));
+		pack();
 	}
 
 	private JMenuBar createJMenuBar() {
@@ -160,10 +131,13 @@ public class ViewFrame extends JFrame {
 		return menuBar;
 	}
 
-	public void setImages(BufferedImage[] images) {
-		panel.setImage(images);
-		panel.repaint();
-	}
+//	public void setImages(BufferedImage[] images) {
+//		panel.setImage(images);
+//		panel.repaint();
+//	}
+//	public void setRenderer(PDFRenderer renderer) {
+//		panel.setRenderer(renderer);
+//	}
 	File currentFile;
 	public void setCurrentFile(File file) {
 		this.currentFile = file;
@@ -171,19 +145,66 @@ public class ViewFrame extends JFrame {
 	public File getCurrentFile() {
 		return currentFile;
 	}
-	int currentPage;
-	public void setCurrentPage(int currentPage) {
-		this.currentPage = currentPage;
-	}
-	public int getCurrentPage() {
-		return currentPage;
-	}
-	public void setOffset(int offset) {
-		panel.setOffset(offset);
-		panel.repaint();
-	}
 	public void setSize(int size) {
 		slider.setMaximum(size - 1);
+	}
+
+	public void open() {
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setFileFilter(new FileFilter() {
+
+			@Override
+			public boolean accept(File f) {
+				if (f.canRead()) {
+					if (f.isDirectory()) {
+						return true;
+					}
+					if (f.isFile() && f.getName().matches(".*\\.[pP][dD][fF]$")) {
+						return true;
+					}
+				}
+				return false;
+			}
+
+			@Override
+			public String getDescription() {
+				return "*.pdf";
+			}
+
+		});
+		fileChooser.showOpenDialog(this);
+		File file = fileChooser.getSelectedFile();
+		if (file != null) {
+			setCurrentFile(file);
+			// PDFドキュメントをロード
+			Thread thread = new Thread(()->{
+				try  {
+					PDDocument document = PDDocument.load(file, MemoryUsageSetting.setupTempFileOnly());
+
+					// ページのリストから最初の1ページを取得する
+					PDFRenderer renderer = new PDFRenderer(document);
+					int max = document.getNumberOfPages();
+					setSize(max);
+					BufferedImage[] images = new BufferedImage[max];
+					panel.setImages(images);
+					for (int i = 0; i < max; i++) {
+						System.out.println("loading:" + i);
+						images[i] = renderer.renderImage(i);
+						System.out.println("loaded:" + i);
+					}
+					renderer = null;
+					document.close();
+					document = null;
+				} catch (IOException e1) {
+					e1.printStackTrace();
+					JOptionPane.showMessageDialog(this, e1.getMessage());
+				}
+
+				System.gc();
+			});
+			thread.setDaemon(true);
+			thread.start();
+		}
 	}
 
 }

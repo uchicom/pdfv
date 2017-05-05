@@ -1,6 +1,8 @@
 // (c) 2014 uchicom
 package com.uchicom.pdfv;
 
+import javax.swing.SwingUtilities;
+
 /**
  *
  * @author Shigeki Uchiyama
@@ -9,10 +11,10 @@ package com.uchicom.pdfv;
 public class Main {
 
 	public static void main(String[] args) {
-		ViewFrame frame = new ViewFrame();
-		frame.pack();
-		frame.setVisible(true);
-
+		SwingUtilities.invokeLater(()->{
+			ViewFrame frame = new ViewFrame();
+			frame.setVisible(true);
+		});
 	}
 
 }

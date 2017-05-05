@@ -34,7 +34,9 @@ public class ImagePanel extends Component {
 
 	public void setCurrentPage(int currentPage) {
 		this.currentPage = currentPage;
+		System.out.println(currentPage);
 		if (images != null && images[currentPage] != null) {
+			System.out.println("size");
 			setPreferredSize(new Dimension(images[currentPage].getWidth(), images[currentPage].getHeight()));
 		}
 		repaint();

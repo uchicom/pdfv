@@ -192,6 +192,7 @@ public class ViewFrame extends JFrame {
 						images[i] = renderer.renderImage(i);
 						System.out.println("loaded:" + i);
 					}
+					panel.setCurrentPage(panel.getCurrentPage());
 					renderer = null;
 					document.close();
 					document = null;

@@ -7,5 +7,6 @@
 	<classpathentry kind="lib" path="lib/pdfbox-2.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/bcmail-jdk15on-156.jar"/>
 	<classpathentry kind="lib" path="lib/bcprov-jdk15on-156.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ui"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

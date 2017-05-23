@@ -1,17 +1,18 @@
 // (c) 2014 uchicom
 package com.uchicom.pdfv;
 
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+
+import javax.swing.JComponent;
 
 /**
  * pdfをロードして、画像のストリーム形式で保存する。
  * @author Shigeki Uchiyama
  *
  */
-public class ImagePanel extends Component {
+public class ImagePanel extends JComponent {
 
 	private BufferedImage[] images;
 	private double base = 1.1;

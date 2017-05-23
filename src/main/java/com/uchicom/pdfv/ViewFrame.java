@@ -2,6 +2,7 @@
 package com.uchicom.pdfv;
 
 import java.awt.BorderLayout;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseWheelEvent;
@@ -9,6 +10,7 @@ import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -36,13 +38,14 @@ import com.uchicom.pdfv.action.PropertyAction;
 import com.uchicom.pdfv.action.RightAction;
 import com.uchicom.pdfv.action.SaveAction;
 import com.uchicom.pdfv.util.ResourceUtil;
+import com.uchicom.ui.FileOpener;
 
 /**
  *
  * @author Shigeki Uchiyama
  *
  */
-public class ViewFrame extends JFrame {
+public class ViewFrame extends JFrame implements FileOpener {
 
 	private ImagePanel panel;
 	private JSlider slider;
@@ -58,6 +61,7 @@ public class ViewFrame extends JFrame {
 
 		setJMenuBar(createJMenuBar());
 		panel = new ImagePanel();
+		FileOpener.installDragAndDrop(panel, this);
 		panel.addMouseWheelListener(new MouseWheelListener() {
 
 			@Override
@@ -176,36 +180,64 @@ public class ViewFrame extends JFrame {
 		File file = fileChooser.getSelectedFile();
 		if (file != null) {
 			setCurrentFile(file);
-			// PDFドキュメントをロード
-			Thread thread = new Thread(()->{
-				try  {
-					PDDocument document = PDDocument.load(file, MemoryUsageSetting.setupTempFileOnly());
-
-					// ページのリストから最初の1ページを取得する
-					PDFRenderer renderer = new PDFRenderer(document);
-					int max = document.getNumberOfPages();
-					setSize(max);
-					BufferedImage[] images = new BufferedImage[max];
-					panel.setImages(images);
-					for (int i = 0; i < max; i++) {
-						System.out.println("loading:" + i);
-						images[i] = renderer.renderImage(i);
-						System.out.println("loaded:" + i);
-					}
-					panel.setCurrentPage(panel.getCurrentPage());
-					renderer = null;
-					document.close();
-					document = null;
-				} catch (IOException e1) {
-					e1.printStackTrace();
-					JOptionPane.showMessageDialog(this, e1.getMessage());
-				}
-
-				System.gc();
-			});
-			thread.setDaemon(true);
-			thread.start();
+			try {
+				open(file);
+			} catch (IOException e) {
+				JOptionPane.showMessageDialog(this, e.getMessage());
+				e.printStackTrace();
+			}
 		}
+	}
+	/* (非 Javadoc)
+	 * @see com.uchicom.ui.FileOpener#open(java.io.File)
+	 */
+	@Override
+	public void open(File file) throws IOException {
+		// PDFドキュメントをロード
+		Thread thread = new Thread(() -> {
+			try {
+				PDDocument document = PDDocument.load(file, MemoryUsageSetting.setupTempFileOnly());
+
+				// ページのリストから最初の1ページを取得する
+				PDFRenderer renderer = new PDFRenderer(document);
+				int max = document.getNumberOfPages();
+				setSize(max);
+				BufferedImage[] images = new BufferedImage[max];
+				panel.setImages(images);
+				for (int i = 0; i < max; i++) {
+					System.out.println("loading:" + i);
+					images[i] = renderer.renderImage(i);
+					System.out.println("loaded:" + i);
+				}
+				panel.setCurrentPage(panel.getCurrentPage());
+				renderer = null;
+				document.close();
+				document = null;
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				JOptionPane.showMessageDialog(this, e1.getMessage());
+			}
+
+			System.gc();
+		});
+		thread.setDaemon(true);
+		thread.start();
+	}
+	/* (非 Javadoc)
+	 * @see com.uchicom.ui.FileOpener#open(java.util.List)
+	 */
+	@Override
+	public void open(List<File> fileList) {
+		setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+		if (fileList.size() > 0) {
+			try {
+				open(fileList.get(0));
+			} catch (IOException e) {
+				JOptionPane.showMessageDialog(this, e.getMessage());
+				e.printStackTrace();
+			}
+		}
+		setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 	}
 
 }

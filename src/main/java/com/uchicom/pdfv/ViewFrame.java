@@ -2,15 +2,24 @@
 package com.uchicom.pdfv;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.font.FontRenderContext;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -26,6 +35,14 @@ import javax.swing.filechooser.FileFilter;
 
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageTree;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
+import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
+import org.apache.pdfbox.pdmodel.interactive.form.PDComboBox;
+import org.apache.pdfbox.pdmodel.interactive.form.PDField;
+import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 import com.uchicom.pdfv.action.AboutAction;
@@ -204,9 +221,78 @@ public class ViewFrame extends JFrame implements FileOpener {
 				setSize(max);
 				BufferedImage[] images = new BufferedImage[max];
 				panel.setImages(images);
+				PDAcroForm form = document.getDocumentCatalog().getAcroForm();
+				Map<PDPage, List<PDField>> map = new HashMap<>();
+				for (PDField field : form.getFields()) {
+					for (PDAnnotationWidget widget : field.getWidgets()) {
+						PDPage page = widget.getPage();
+						if (map.containsKey(page)) {
+							map.get(page).add(field);
+						} else {
+							List<PDField> fieldList = new ArrayList<>();
+							fieldList.add(field);
+							map.put(page, fieldList);
+						}
+					}
+				}
+				PDPageTree pageTree = document.getPages();
+				int dpi = 300;
 				for (int i = 0; i < max; i++) {
 					System.out.println("loading:" + i);
-					images[i] = renderer.renderImage(i);
+					images[i] = renderer.renderImageWithDPI(i, 300);
+					PDPage page = pageTree.get(i);
+					if (map.containsKey(page)) {
+						Graphics g = images[i].getGraphics();
+						for (PDField field : map.get(page)) {
+							for (PDAnnotationWidget widget : field.getWidgets()) {
+								PDRectangle rect = widget.getRectangle();
+								if (rect == null) {
+
+								} else {
+									int x = Math.round(rect.getLowerLeftX() * dpi / 72);
+									int y = Math.round(rect.getUpperRightY() *  dpi / 72);
+									int width = Math.round(rect.getWidth() * dpi / 72);
+									int height = Math.round(rect.getHeight() * dpi / 72);
+									g.setColor(Color.BLUE);
+									g.drawRect(x, images[i].getHeight() - y, width, height);
+
+									if (field instanceof PDTextField) {
+										PDTextField text = (PDTextField) field;
+										//maxレングスは入力チェックで利用。
+										int length = text.getMaxLen();
+										String[] styles = text.getDefaultAppearance().split(" ");
+										String fontName = styles[0].substring(1);
+										String fontSize = styles[1];
+										if ("0".equals(styles[1])) {
+											//後は全体のサイズが収まるようにフォントサイズを計算する。
+											int maxFont  = width / length;
+											if (maxFont > height) {
+												maxFont = height;
+											}
+											g.setFont(new Font(fontName, Font.PLAIN, maxFont));
+										} else {
+											g.setFont(new Font(fontName, Font.PLAIN, Math.round(Float.parseFloat(fontSize) * dpi / 72)));
+										}
+										Rectangle2D rect2 = g.getFont().getStringBounds(text.getValue(), new FontRenderContext(new AffineTransform(),false,false));
+										g.drawString(text.getValue(), x + width - (int)rect2.getWidth(), images[i].getHeight() - y + height);
+									} else if (field instanceof PDComboBox) {
+										PDComboBox combo = (PDComboBox) field;
+										String[] styles = combo.getDefaultAppearance().split(" ");
+										String fontName = styles[0].substring(1);
+										String fontSize = styles[1];
+										if ("0".equals(styles[1])) {
+											g.setFont(new Font(fontName, Font.PLAIN, width));
+										} else {
+											g.setFont(new Font(fontName, Font.PLAIN, Math.round(Float.parseFloat(fontSize) * dpi / 72)));
+										}
+										Rectangle2D rect2 = g.getFont().getStringBounds(combo.getValue().get(0), new FontRenderContext(new AffineTransform(),false,false));
+										g.drawString(combo.getValue().get(0), x + width - (int)rect2.getWidth(), images[i].getHeight() - y + height);
+									}
+								}
+							}
+						}
+
+					}
 					System.out.println("loaded:" + i);
 				}
 				panel.setCurrentPage(panel.getCurrentPage());

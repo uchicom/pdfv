@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -56,25 +55,37 @@ import com.uchicom.pdfv.action.RightAction;
 import com.uchicom.pdfv.action.SaveAction;
 import com.uchicom.pdfv.util.ResourceUtil;
 import com.uchicom.ui.FileOpener;
+import com.uchicom.ui.ResumeFrame;
 
 /**
  *
  * @author Shigeki Uchiyama
  *
  */
-public class ViewFrame extends JFrame implements FileOpener {
+public class ViewFrame extends ResumeFrame implements FileOpener {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
 	private ImagePanel panel;
 	private JSlider slider;
 
+	/**
+	 * 設定プロパティーファイルの相対パス
+	 */
+	private static final String CONF_FILE_PATH = "./conf/pdfv.properties";
+
 	public ViewFrame() {
+		super(new File(CONF_FILE_PATH), "syo.window");
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		initComponents();
 	}
+
 	private void initComponents() {
 		setTitle(ResourceUtil.getString(Constants.APPLICATION_TITLE) + " "
 				+ ResourceUtil.getString(Constants.APPLICATION_VERSION));
-
 
 		setJMenuBar(createJMenuBar());
 		panel = new ImagePanel();
@@ -83,13 +94,13 @@ public class ViewFrame extends JFrame implements FileOpener {
 
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
-				if ((e.getModifiers() &  ActionEvent.CTRL_MASK) != 0) {
-					//拡大縮小（明日はこの拡大縮小の中心動作を実装する。）
-					if (panel.getRatio() > Constants.MIN_RATIO && e.getWheelRotation() < 0 ||
-							panel.getRatio() < Constants.MAX_RATIO && e.getWheelRotation() > 0) {
-						//拡大縮小
+				if ((e.getModifiers() & ActionEvent.CTRL_MASK) != 0) {
+					// 拡大縮小（明日はこの拡大縮小の中心動作を実装する。）
+					if (panel.getRatio() > Constants.MIN_RATIO && e.getWheelRotation() < 0
+							|| panel.getRatio() < Constants.MAX_RATIO && e.getWheelRotation() > 0) {
+						// 拡大縮小
 						panel.addRatio(e.getWheelRotation());
-						//拡大縮小ラベル設定
+						// 拡大縮小ラベル設定
 						panel.repaint();
 						ResourceUtil.debug(e);
 					}
@@ -98,7 +109,7 @@ public class ViewFrame extends JFrame implements FileOpener {
 
 		});
 		slider = new JSlider(0, 100, 0);
-//		slider.setInverted(true);
+		// slider.setInverted(true);
 		slider.setPaintTicks(true);
 		slider.setMinorTickSpacing(1);
 		slider.setMajorTickSpacing(10);
@@ -111,11 +122,10 @@ public class ViewFrame extends JFrame implements FileOpener {
 			}
 
 		});
-//		slider.setPaintLabels(true);
+		// slider.setPaintLabels(true);
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(new JScrollPane(panel), BorderLayout.CENTER);
 		getContentPane().add(slider, BorderLayout.SOUTH);
-		setPreferredSize(new Dimension(100, 100));
 		pack();
 	}
 
@@ -142,7 +152,6 @@ public class ViewFrame extends JFrame implements FileOpener {
 		menu.add(childMenu);
 		menuBar.add(menu);
 
-
 		menu = new JMenu(ResourceUtil.getString(Constants.MENU_NAME_HELP));
 		menuItem = new JMenuItem(new HelpAction());
 		menu.add(menuItem);
@@ -152,26 +161,34 @@ public class ViewFrame extends JFrame implements FileOpener {
 		return menuBar;
 	}
 
-//	public void setImages(BufferedImage[] images) {
-//		panel.setImage(images);
-//		panel.repaint();
-//	}
-//	public void setRenderer(PDFRenderer renderer) {
-//		panel.setRenderer(renderer);
-//	}
+	// public void setImages(BufferedImage[] images) {
+	// panel.setImage(images);
+	// panel.repaint();
+	// }
+	// public void setRenderer(PDFRenderer renderer) {
+	// panel.setRenderer(renderer);
+	// }
 	File currentFile;
+
 	public void setCurrentFile(File file) {
 		this.currentFile = file;
 	}
+
 	public File getCurrentFile() {
 		return currentFile;
 	}
+
 	public void setSize(int size) {
 		slider.setMaximum(size - 1);
 	}
 
 	public void open() {
 		JFileChooser fileChooser = new JFileChooser();
+
+		String current = getString("current");
+		if (current != null) {
+			fileChooser.setCurrentDirectory(new File(current));
+		}
 		fileChooser.setFileFilter(new FileFilter() {
 
 			@Override
@@ -205,11 +222,15 @@ public class ViewFrame extends JFrame implements FileOpener {
 			}
 		}
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see com.uchicom.ui.FileOpener#open(java.io.File)
 	 */
 	@Override
 	public void open(File file) throws IOException {
+		config.setProperty("current", file.getParentFile().getPath());
 		// PDFドキュメントをロード
 		Thread thread = new Thread(() -> {
 			try {
@@ -223,15 +244,17 @@ public class ViewFrame extends JFrame implements FileOpener {
 				panel.setImages(images);
 				PDAcroForm form = document.getDocumentCatalog().getAcroForm();
 				Map<PDPage, List<PDField>> map = new HashMap<>();
-				for (PDField field : form.getFields()) {
-					for (PDAnnotationWidget widget : field.getWidgets()) {
-						PDPage page = widget.getPage();
-						if (map.containsKey(page)) {
-							map.get(page).add(field);
-						} else {
-							List<PDField> fieldList = new ArrayList<>();
-							fieldList.add(field);
-							map.put(page, fieldList);
+				if (form != null) {
+					for (PDField field : form.getFields()) {
+						for (PDAnnotationWidget widget : field.getWidgets()) {
+							PDPage page = widget.getPage();
+							if (map.containsKey(page)) {
+								map.get(page).add(field);
+							} else {
+								List<PDField> fieldList = new ArrayList<>();
+								fieldList.add(field);
+								map.put(page, fieldList);
+							}
 						}
 					}
 				}
@@ -250,7 +273,7 @@ public class ViewFrame extends JFrame implements FileOpener {
 
 								} else {
 									int x = Math.round(rect.getLowerLeftX() * dpi / 72);
-									int y = Math.round(rect.getUpperRightY() *  dpi / 72);
+									int y = Math.round(rect.getUpperRightY() * dpi / 72);
 									int width = Math.round(rect.getWidth() * dpi / 72);
 									int height = Math.round(rect.getHeight() * dpi / 72);
 									g.setColor(Color.BLUE);
@@ -258,23 +281,26 @@ public class ViewFrame extends JFrame implements FileOpener {
 
 									if (field instanceof PDTextField) {
 										PDTextField text = (PDTextField) field;
-										//maxレングスは入力チェックで利用。
+										// maxレングスは入力チェックで利用。
 										int length = text.getMaxLen();
 										String[] styles = text.getDefaultAppearance().split(" ");
 										String fontName = styles[0].substring(1);
 										String fontSize = styles[1];
 										if ("0".equals(styles[1])) {
-											//後は全体のサイズが収まるようにフォントサイズを計算する。
-											int maxFont  = width / length;
+											// 後は全体のサイズが収まるようにフォントサイズを計算する。
+											int maxFont = width / length;
 											if (maxFont > height) {
 												maxFont = height;
 											}
 											g.setFont(new Font(fontName, Font.PLAIN, maxFont));
 										} else {
-											g.setFont(new Font(fontName, Font.PLAIN, Math.round(Float.parseFloat(fontSize) * dpi / 72)));
+											g.setFont(new Font(fontName, Font.PLAIN,
+													Math.round(Float.parseFloat(fontSize) * dpi / 72)));
 										}
-										Rectangle2D rect2 = g.getFont().getStringBounds(text.getValue(), new FontRenderContext(new AffineTransform(),false,false));
-										g.drawString(text.getValue(), x + width - (int)rect2.getWidth(), images[i].getHeight() - y + height);
+										Rectangle2D rect2 = g.getFont().getStringBounds(text.getValue(),
+												new FontRenderContext(new AffineTransform(), false, false));
+										g.drawString(text.getValue(), x + width - (int) rect2.getWidth(),
+												images[i].getHeight() - y + height);
 									} else if (field instanceof PDComboBox) {
 										PDComboBox combo = (PDComboBox) field;
 										String[] styles = combo.getDefaultAppearance().split(" ");
@@ -283,10 +309,13 @@ public class ViewFrame extends JFrame implements FileOpener {
 										if ("0".equals(styles[1])) {
 											g.setFont(new Font(fontName, Font.PLAIN, width));
 										} else {
-											g.setFont(new Font(fontName, Font.PLAIN, Math.round(Float.parseFloat(fontSize) * dpi / 72)));
+											g.setFont(new Font(fontName, Font.PLAIN,
+													Math.round(Float.parseFloat(fontSize) * dpi / 72)));
 										}
-										Rectangle2D rect2 = g.getFont().getStringBounds(combo.getValue().get(0), new FontRenderContext(new AffineTransform(),false,false));
-										g.drawString(combo.getValue().get(0), x + width - (int)rect2.getWidth(), images[i].getHeight() - y + height);
+										Rectangle2D rect2 = g.getFont().getStringBounds(combo.getValue().get(0),
+												new FontRenderContext(new AffineTransform(), false, false));
+										g.drawString(combo.getValue().get(0), x + width - (int) rect2.getWidth(),
+												images[i].getHeight() - y + height);
 									}
 								}
 							}
@@ -309,7 +338,10 @@ public class ViewFrame extends JFrame implements FileOpener {
 		thread.setDaemon(true);
 		thread.start();
 	}
-	/* (非 Javadoc)
+
+	/*
+	 * (非 Javadoc)
+	 * 
 	 * @see com.uchicom.ui.FileOpener#open(java.util.List)
 	 */
 	@Override

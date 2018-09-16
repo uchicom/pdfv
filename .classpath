@@ -11,10 +11,8 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/bcmail-jdk15on-156.jar"/>
 	<classpathentry kind="lib" path="lib/bcprov-jdk15on-156.jar"/>
-	<classpathentry kind="lib" path="lib/pdfbox-app-2.0.6.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ui"/>
 	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
 		<attributes>

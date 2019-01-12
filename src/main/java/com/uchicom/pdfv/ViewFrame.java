@@ -78,7 +78,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
 	private static final String CONF_FILE_PATH = "./conf/pdfv.properties";
 
 	public ViewFrame() {
-		super(new File(CONF_FILE_PATH), "syo.window");
+		super(new File(CONF_FILE_PATH), "pdfv.window");
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		initComponents();
 	}

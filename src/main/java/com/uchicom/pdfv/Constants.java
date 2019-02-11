@@ -52,7 +52,7 @@ public class Constants {
 	/** ログレベル設定 */
 	public static final String LOG = "log";
 	/** 拡大率の最大値 */
-	public static int MAX_RATIO = 3;
+	public static int MAX_RATIO = 5;
 	/** 拡大率の最小値 */
-	public static int MIN_RATIO = -3;
+	public static int MIN_RATIO = -5;
 }

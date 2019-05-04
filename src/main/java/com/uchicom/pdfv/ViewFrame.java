@@ -4,7 +4,6 @@ package com.uchicom.pdfv;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
@@ -241,7 +240,6 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
 				int max = document.getNumberOfPages();
 				setSize(max);
 				BufferedImage[] images = new BufferedImage[max];
-				panel.setImages(images);
 				PDAcroForm form = document.getDocumentCatalog().getAcroForm();
 				Map<PDPage, List<PDField>> map = new HashMap<>();
 				if (form != null) {
@@ -325,6 +323,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
 					System.out.println("loaded:" + i);
 				}
 				panel.setCurrentPage(panel.getCurrentPage());
+				panel.setImages(images);
 				renderer = null;
 				document.close();
 				document = null;

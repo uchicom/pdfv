@@ -9,6 +9,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 
 import com.uchicom.pdfv.Constants;
@@ -35,7 +36,7 @@ public class FirstAction extends AbstractAction {
 	public void actionPerformed(ActionEvent e) {
 		PDDocument document = null;
 		try {
-			document = PDDocument.load(component.getCurrentFile());
+			document = Loader.loadPDF(component.getCurrentFile());
 //			component.setCurrentPage(0);
 //			PDFRenderer pdfRenderer = new PDFRenderer(document);
 //			int pageCount = document.getNumberOfPages();

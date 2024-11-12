@@ -9,6 +9,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 
 import com.uchicom.pdfv.Constants;
@@ -38,7 +39,7 @@ public class PropertyAction extends AbstractAction {
 		if (component.getCurrentFile() != null) {
 			PDDocument document = null;
 			try {
-				document = PDDocument.load(component.getCurrentFile());
+				document = Loader.loadPDF(component.getCurrentFile());
 //				PDDocumentInformation di = document.getDocumentInformation();
 				PropertyDialog dialog = new PropertyDialog(component, document);
 

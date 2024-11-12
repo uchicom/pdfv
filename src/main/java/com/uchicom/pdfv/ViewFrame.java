@@ -31,7 +31,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 
-import org.apache.pdfbox.io.MemoryUsageSetting;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageTree;
@@ -233,7 +233,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
 		// PDFドキュメントをロード
 		Thread thread = new Thread(() -> {
 			try {
-				PDDocument document = PDDocument.load(file, MemoryUsageSetting.setupTempFileOnly());
+				PDDocument document = Loader.loadPDF(file);
 
 				// ページのリストから最初の1ページを取得する
 				PDFRenderer renderer = new PDFRenderer(document);

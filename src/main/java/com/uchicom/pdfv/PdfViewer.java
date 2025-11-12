@@ -1,22 +1,19 @@
-// (c) 2017 uchicom
+// (C) 2017 uchicom
 package com.uchicom.pdfv;
 
 import javax.swing.JFrame;
 
 /**
  * @author uchicom: Shigeki Uchiyama
- *
  */
 public class PdfViewer extends JFrame {
 
-	public PdfViewer() {
-		initComponents();
-	}
+  public PdfViewer() {
+    initComponents();
+  }
 
-	/**
-	 *
-	 */
-	private void initComponents() {
-		pack();
-	}
+  /** */
+  private void initComponents() {
+    pack();
+  }
 }

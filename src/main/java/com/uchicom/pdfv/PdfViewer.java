@@ -12,7 +12,6 @@ public class PdfViewer extends JFrame {
     initComponents();
   }
 
-  /** */
   private void initComponents() {
     pack();
   }

@@ -14,23 +14,12 @@ import com.uchicom.pdfv.util.ResourceUtil;
 import com.uchicom.ui.FileOpener;
 import com.uchicom.ui.ResumeFrame;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Cursor;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.font.FontRenderContext;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -43,14 +32,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageTree;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
-import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
-import org.apache.pdfbox.pdmodel.interactive.form.PDComboBox;
-import org.apache.pdfbox.pdmodel.interactive.form.PDField;
-import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 /**
@@ -61,8 +42,9 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
   /** */
   private static final long serialVersionUID = 1L;
 
-  private ImagePanel panel;
+  private PdfImagePanel panel;
   private JSlider slider;
+  PDDocument document;
 
   /** 設定プロパティーファイルの相対パス */
   private static final String CONF_FILE_PATH = "./conf/pdfv.properties";
@@ -80,17 +62,17 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
             + ResourceUtil.getString(Constants.APPLICATION_VERSION));
 
     setJMenuBar(createJMenuBar());
-    panel = new ImagePanel();
+    panel = new PdfImagePanel();
     FileOpener.installDragAndDrop(panel, this);
     panel.addMouseWheelListener(
         new MouseWheelListener() {
 
           @Override
           public void mouseWheelMoved(MouseWheelEvent e) {
-            if ((e.getModifiers() & ActionEvent.CTRL_MASK) != 0) {
+            if ((e.getModifiersEx() & java.awt.event.MouseEvent.CTRL_DOWN_MASK) != 0) {
               // 拡大縮小（明日はこの拡大縮小の中心動作を実装する。）
-              if (panel.getRatio() > Constants.MIN_RATIO && e.getWheelRotation() < 0
-                  || panel.getRatio() < Constants.MAX_RATIO && e.getWheelRotation() > 0) {
+              if (panel.getRatio() > Constants.MIN_RATIO && e.getWheelRotation() > 0
+                  || panel.getRatio() < Constants.MAX_RATIO && e.getWheelRotation() < 0) {
                 // 拡大縮小
                 panel.addRatio(e.getWheelRotation());
                 // 拡大縮小ラベル設定
@@ -119,6 +101,8 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
     getContentPane().add(new JScrollPane(panel), BorderLayout.CENTER);
     getContentPane().add(slider, BorderLayout.SOUTH);
     pack();
+
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> close()));
   }
 
   private JMenuBar createJMenuBar() {
@@ -224,126 +208,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
   public void open(File file) throws IOException {
     config.setProperty("current", file.getParentFile().getPath());
     // PDFドキュメントをロード
-    Thread thread =
-        new Thread(
-            () -> {
-              try {
-                PDDocument document = Loader.loadPDF(file);
-
-                // ページのリストから最初の1ページを取得する
-                PDFRenderer renderer = new PDFRenderer(document);
-                int max = document.getNumberOfPages();
-                setSize(max);
-                BufferedImage[] images = new BufferedImage[max];
-                PDAcroForm form = document.getDocumentCatalog().getAcroForm();
-                Map<PDPage, List<PDField>> map = new HashMap<>();
-                if (form != null) {
-                  for (PDField field : form.getFields()) {
-                    for (PDAnnotationWidget widget : field.getWidgets()) {
-                      PDPage page = widget.getPage();
-                      if (map.containsKey(page)) {
-                        map.get(page).add(field);
-                      } else {
-                        List<PDField> fieldList = new ArrayList<>();
-                        fieldList.add(field);
-                        map.put(page, fieldList);
-                      }
-                    }
-                  }
-                }
-                PDPageTree pageTree = document.getPages();
-                int dpi = 300;
-                for (int i = 0; i < max; i++) {
-                  System.out.println("loading:" + i);
-                  images[i] = renderer.renderImageWithDPI(i, 200);
-                  PDPage page = pageTree.get(i);
-                  if (map.containsKey(page)) {
-                    Graphics g = images[i].getGraphics();
-                    for (PDField field : map.get(page)) {
-                      for (PDAnnotationWidget widget : field.getWidgets()) {
-                        PDRectangle rect = widget.getRectangle();
-                        if (rect == null) {
-
-                        } else {
-                          int x = Math.round(rect.getLowerLeftX() * dpi / 72);
-                          int y = Math.round(rect.getUpperRightY() * dpi / 72);
-                          int width = Math.round(rect.getWidth() * dpi / 72);
-                          int height = Math.round(rect.getHeight() * dpi / 72);
-                          g.setColor(Color.BLUE);
-                          g.drawRect(x, images[i].getHeight() - y, width, height);
-
-                          if (field instanceof PDTextField) {
-                            PDTextField text = (PDTextField) field;
-                            // maxレングスは入力チェックで利用。
-                            int length = text.getMaxLen();
-                            String[] styles = text.getDefaultAppearance().split(" ");
-                            String fontName = styles[0].substring(1);
-                            String fontSize = styles[1];
-                            if ("0".equals(styles[1])) {
-                              // 後は全体のサイズが収まるようにフォントサイズを計算する。
-                              int maxFont = width / length;
-                              if (maxFont > height) {
-                                maxFont = height;
-                              }
-                              g.setFont(new Font(fontName, Font.PLAIN, maxFont));
-                            } else {
-                              g.setFont(
-                                  new Font(
-                                      fontName,
-                                      Font.PLAIN,
-                                      Math.round(Float.parseFloat(fontSize) * dpi / 72)));
-                            }
-                            Rectangle2D rect2 =
-                                g.getFont()
-                                    .getStringBounds(
-                                        text.getValue(),
-                                        new FontRenderContext(new AffineTransform(), false, false));
-                            g.drawString(
-                                text.getValue(),
-                                x + width - (int) rect2.getWidth(),
-                                images[i].getHeight() - y + height);
-                          } else if (field instanceof PDComboBox) {
-                            PDComboBox combo = (PDComboBox) field;
-                            String[] styles = combo.getDefaultAppearance().split(" ");
-                            String fontName = styles[0].substring(1);
-                            String fontSize = styles[1];
-                            if ("0".equals(styles[1])) {
-                              g.setFont(new Font(fontName, Font.PLAIN, width));
-                            } else {
-                              g.setFont(
-                                  new Font(
-                                      fontName,
-                                      Font.PLAIN,
-                                      Math.round(Float.parseFloat(fontSize) * dpi / 72)));
-                            }
-                            Rectangle2D rect2 =
-                                g.getFont()
-                                    .getStringBounds(
-                                        combo.getValue().get(0),
-                                        new FontRenderContext(new AffineTransform(), false, false));
-                            g.drawString(
-                                combo.getValue().get(0),
-                                x + width - (int) rect2.getWidth(),
-                                images[i].getHeight() - y + height);
-                          }
-                        }
-                      }
-                    }
-                  }
-                  System.out.println("loaded:" + i);
-                }
-                panel.setCurrentPage(panel.getCurrentPage());
-                panel.setImages(images);
-                renderer = null;
-                document.close();
-                document = null;
-              } catch (IOException e1) {
-                e1.printStackTrace();
-                JOptionPane.showMessageDialog(this, e1.getMessage());
-              }
-
-              System.gc();
-            });
+    Thread thread = new Thread(() -> load(file));
     thread.setDaemon(true);
     thread.start();
   }
@@ -365,5 +230,65 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
       }
     }
     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+  }
+
+  void load(File file) {
+
+    try {
+      close();
+      document = Loader.loadPDF(file);
+
+      // ページのリストから最初の1ページを取得する
+      panel.setPDFRenderer(new PDFRenderer(document));
+      int max = document.getNumberOfPages();
+      setSize(max);
+      panel.setCurrentPage(panel.getCurrentPage());
+    } catch (IOException e1) {
+      e1.printStackTrace();
+      JOptionPane.showMessageDialog(this, e1.getMessage());
+    }
+
+    System.gc();
+  }
+
+  void close() {
+    if (document == null) {
+      return;
+    }
+    try {
+      document.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    document = null;
+  }
+
+  public void showFirst() {
+    show(0);
+  }
+
+  public void showLast() {
+    show(document.getNumberOfPages() - 1);
+  }
+
+  public void showNext() {
+    int nextPage = panel.getCurrentPage() + 1;
+    if (nextPage >= document.getNumberOfPages()) {
+      nextPage = document.getNumberOfPages() - 1;
+    }
+    show(nextPage);
+  }
+
+  public void showPrevious() {
+    int previousPage = panel.getCurrentPage() - 1;
+    if (previousPage < 0) {
+      previousPage = 0;
+    }
+    show(previousPage);
+  }
+
+  void show(int page) {
+    panel.setCurrentPage(page);
+    slider.setValue(page);
   }
 }

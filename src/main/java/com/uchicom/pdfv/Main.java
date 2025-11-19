@@ -9,10 +9,6 @@ import javax.swing.SwingUtilities;
 public class Main {
 
   public static void main(String[] args) {
-    SwingUtilities.invokeLater(
-        () -> {
-          ViewFrame frame = new ViewFrame();
-          frame.setVisible(true);
-        });
+    SwingUtilities.invokeLater(() -> new ViewFrame().setVisible(true));
   }
 }

@@ -12,21 +12,21 @@ import javax.swing.KeyStroke;
 /**
  * @author Shigeki Uchiyama
  */
-public class SaveAction extends AbstractAction {
+public class SplitSaveAction extends AbstractAction {
   /** シリアルID */
   private static final long serialVersionUID = 1L;
 
   private ViewFrame component;
 
-  public SaveAction(ViewFrame component) {
-    putValue(NAME, ResourceUtil.getString(Constants.ACTION_NAME_SAVE));
-    putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK));
+  public SplitSaveAction(ViewFrame component) {
+    putValue(NAME, ResourceUtil.getString(Constants.ACTION_NAME_SPLIT_SAVE));
+    putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_DOWN_MASK));
     //		putValue(ACTION_COMMAND_KEY, "Ctrl + S");
     this.component = component;
   }
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    component.save();
+    component.saveSplit();
   }
 }

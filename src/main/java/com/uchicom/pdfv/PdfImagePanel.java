@@ -60,10 +60,12 @@ public class PdfImagePanel extends JComponent {
 
   public void setScaledImage() {
     try {
-      BufferedImage image = renderer.renderImageWithDPI(currentPage, 200);
-      int width = (int) (image.getWidth() * Math.pow(base, ratio));
-      int height = (int) (image.getHeight() * Math.pow(base, ratio));
-      setImage(image.getScaledInstance(width, height, Image.SCALE_AREA_AVERAGING));
+      synchronized (renderer) {
+        BufferedImage image = renderer.renderImageWithDPI(currentPage, 200);
+        int width = (int) (image.getWidth() * Math.pow(base, ratio));
+        int height = (int) (image.getHeight() * Math.pow(base, ratio));
+        setImage(image.getScaledInstance(width, height, Image.SCALE_AREA_AVERAGING));
+      }
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();

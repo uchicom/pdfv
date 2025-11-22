@@ -18,6 +18,9 @@ public class Constants {
   /** 保存のアクション名 */
   public static final String ACTION_NAME_SAVE = "action.name.save";
 
+  /** 分割保存のアクション名 */
+  public static final String ACTION_NAME_SPLIT_SAVE = "action.name.split_save";
+
   /** プロパティのアクション名 */
   public static final String ACTION_NAME_PROPERTY = "action.name.property";
 

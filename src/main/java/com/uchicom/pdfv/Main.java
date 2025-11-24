@@ -1,6 +1,7 @@
 // (C) 2014 uchicom
 package com.uchicom.pdfv;
 
+import com.uchicom.util.Parameter;
 import javax.swing.SwingUtilities;
 
 /**
@@ -9,6 +10,6 @@ import javax.swing.SwingUtilities;
 public class Main {
 
   public static void main(String[] args) {
-    SwingUtilities.invokeLater(() -> new ViewFrame().setVisible(true));
+    SwingUtilities.invokeLater(() -> new ViewFrame(new Parameter(args)).setVisible(true));
   }
 }

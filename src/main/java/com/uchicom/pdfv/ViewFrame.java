@@ -15,6 +15,7 @@ import com.uchicom.pdfv.ui.MessageIcon;
 import com.uchicom.pdfv.util.ResourceUtil;
 import com.uchicom.ui.FileOpener;
 import com.uchicom.ui.ResumeFrame;
+import com.uchicom.util.Parameter;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -74,13 +75,13 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
   /** 設定プロパティーファイルの相対パス */
   private static final String CONF_FILE_PATH = "./conf/pdfv.properties";
 
-  public ViewFrame() {
+  public ViewFrame(Parameter parameter) {
     super(new File(CONF_FILE_PATH), "pdfv.window");
     setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-    initComponents();
+    initComponents(parameter);
   }
 
-  private void initComponents() {
+  private void initComponents(Parameter parameter) {
     setTitle(
         ResourceUtil.getString(Constants.APPLICATION_TITLE)
             + " "
@@ -140,6 +141,27 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
     pack();
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> close()));
+    if (parameter.is("file")) {
+      var file = parameter.getFile("file");
+      if (!file.exists()) {
+        JOptionPane.showMessageDialog(this, "ファイルが見つかりません。" + file.getPath());
+        return;
+      }
+      if (!file.isFile()) {
+        JOptionPane.showMessageDialog(this, "ファイルではありません。" + file.getPath());
+        return;
+      }
+      if (!file.canRead()) {
+        JOptionPane.showMessageDialog(this, "ファイルが読み取れません。" + file.getPath());
+        return;
+      }
+      try {
+        open(file);
+      } catch (IOException e) {
+        JOptionPane.showMessageDialog(this, e.getMessage());
+        e.printStackTrace();
+      }
+    }
   }
 
   void loadImage(JViewport viewport) {

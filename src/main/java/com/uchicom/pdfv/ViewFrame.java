@@ -22,6 +22,7 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
@@ -181,7 +182,12 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
       count++;
       var radio = (JRadioButton) component;
       if (!isVisible) {
+        if (radio.getIcon() == loadingIcon) {
+          continue;
+        }
+        var b = radio.getSize();
         radio.setIcon(loadingIcon);
+        radio.setPreferredSize(b);
         leftPanel.repaint();
         if (breakFlag) {
           break;
@@ -197,6 +203,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
           var image =
               renderer.renderImage(
                   count - 1, (viewRect.width - 12) / getWidth(document.getPage(count - 1)));
+          radio.setPreferredSize(null);
           radio.setIcon(new ImageIcon(image));
           radio.setSelectedIcon(new XorImageIcon(image));
         }
@@ -364,6 +371,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
             new AbstractAction() {
               @Override
               public void actionPerformed(ActionEvent e) {
+                scrollToCenter(radio);
                 SwingUtilities.invokeLater(() -> show(j));
               }
             });
@@ -383,6 +391,17 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
     }
 
     System.gc();
+  }
+
+  void scrollToCenter(JRadioButton radio) {
+    var viewport = leftScrollPane.getViewport();
+    var viewRect = viewport.getSize();
+    var componentRect = radio.getBounds();
+    var newY = componentRect.y - (viewRect.height - componentRect.height) / 2;
+    if (newY < 0) {
+      newY = 0;
+    }
+    viewport.setViewPosition(new Point(0, newY));
   }
 
   void close() {

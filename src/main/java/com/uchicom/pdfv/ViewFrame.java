@@ -12,6 +12,7 @@ import com.uchicom.pdfv.action.RightAction;
 import com.uchicom.pdfv.action.SaveAction;
 import com.uchicom.pdfv.action.SplitSaveAction;
 import com.uchicom.pdfv.ui.MessageIcon;
+import com.uchicom.pdfv.ui.XorImageIcon;
 import com.uchicom.pdfv.util.ResourceUtil;
 import com.uchicom.ui.FileOpener;
 import com.uchicom.ui.ResumeFrame;
@@ -193,10 +194,11 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
       }
       try {
         synchronized (renderer) {
-          radio.setIcon(
-              new ImageIcon(
-                  renderer.renderImage(
-                      count - 1, (viewRect.width - 12) / getWidth(document.getPage(count - 1)))));
+          var image =
+              renderer.renderImage(
+                  count - 1, (viewRect.width - 12) / getWidth(document.getPage(count - 1)));
+          radio.setIcon(new ImageIcon(image));
+          radio.setSelectedIcon(new XorImageIcon(image));
         }
       } catch (IOException e1) {
         radio.setIcon(errorIcon);
@@ -362,7 +364,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
             new AbstractAction() {
               @Override
               public void actionPerformed(ActionEvent e) {
-                show(j);
+                SwingUtilities.invokeLater(() -> show(j));
               }
             });
         group.add(radio);

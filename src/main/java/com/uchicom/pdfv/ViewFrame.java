@@ -382,6 +382,9 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
         }
         final int j = i;
         JRadioButton radio = new JRadioButton(loadingIcon);
+        if (i == 0) {
+          radio.setSelected(true);
+        }
         radio.setPreferredSize(getRadioDimension(page, (int) (width - 12)));
         radio.setAction(
             new AbstractAction() {

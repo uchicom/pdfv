@@ -377,7 +377,9 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
       for (int i = 0; i < max; i++) {
         var page = document.getPage(i);
         if (i > 0) {
-          leftPanel.add(new JToggleButton("分割"), gbc);
+          var toggle = new JToggleButton("分割");
+          toggle.setFocusable(false);
+          leftPanel.add(toggle, gbc);
           gbc.gridy++;
         }
         final int j = i;

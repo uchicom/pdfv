@@ -20,6 +20,7 @@ import com.uchicom.util.Parameter;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Point;
@@ -185,9 +186,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
         if (radio.getIcon() == loadingIcon) {
           continue;
         }
-        var b = radio.getSize();
         radio.setIcon(loadingIcon);
-        radio.setPreferredSize(b);
         leftPanel.repaint();
         if (breakFlag) {
           break;
@@ -200,10 +199,12 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
       }
       try {
         synchronized (renderer) {
-          var image =
-              renderer.renderImage(
-                  count - 1, (viewRect.width - 12) / getWidth(document.getPage(count - 1)));
-          radio.setPreferredSize(null);
+          var pdPage = document.getPage(count - 1);
+          var width = getWidth(pdPage);
+          var image = renderer.renderImage(count - 1, (viewRect.width - 12) / width);
+          if (radio.getIcon() != null && radio.getIcon().getIconWidth() != viewRect.width) {
+            radio.setPreferredSize(getRadioDimension(pdPage, viewRect.width - 12));
+          }
           radio.setIcon(new ImageIcon(image));
           radio.setSelectedIcon(new XorImageIcon(image));
         }
@@ -216,6 +217,18 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
   float getWidth(PDPage pdPage) {
     var cropBox = pdPage.getCropBox();
     return pdPage.getRotation() % 180 == 0 ? cropBox.getWidth() : cropBox.getHeight();
+  }
+
+  float getWidthMagnification(PDPage pdPage) {
+    var cropBox = pdPage.getCropBox();
+    return pdPage.getRotation() % 180 == 0
+        ? cropBox.getHeight() / cropBox.getWidth()
+        : cropBox.getWidth() / cropBox.getHeight();
+  }
+
+  Dimension getRadioDimension(PDPage pdPage, int width) {
+    var widthMagnification = getWidthMagnification(pdPage);
+    return new Dimension(width, (int) (width * widthMagnification));
   }
 
   private JMenuBar createJMenuBar() {
@@ -360,13 +373,16 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
       gbc.insets.bottom = 2;
       gbc.insets.left = 2;
       gbc.insets.right = 2;
+      var width = leftScrollPane.getViewport().getViewRect().getWidth();
       for (int i = 0; i < max; i++) {
+        var page = document.getPage(i);
         if (i > 0) {
           leftPanel.add(new JToggleButton("分割"), gbc);
           gbc.gridy++;
         }
         final int j = i;
         JRadioButton radio = new JRadioButton(loadingIcon);
+        radio.setPreferredSize(getRadioDimension(page, (int) (width - 12)));
         radio.setAction(
             new AbstractAction() {
               @Override
@@ -416,6 +432,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
     document = null;
   }
 
+  // メニュー用メソッド
   public void showFirst() {
     show(0);
   }

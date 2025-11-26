@@ -19,6 +19,6 @@ public class XorImageIcon extends ImageIcon {
     g.setXORMode(new Color(0, 0, 255, 10));
 
     // 画像を描画
-    g.drawImage(getImage(), 0, 0, getImageObserver());
+    g.drawImage(getImage(), x, y, getImageObserver());
   }
 }

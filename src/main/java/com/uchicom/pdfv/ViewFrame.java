@@ -134,7 +134,11 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
     viewPanel.add(new JScrollPane(panel), BorderLayout.CENTER);
     viewPanel.add(slider, BorderLayout.SOUTH);
     splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-    leftScrollPane = new JScrollPane(leftPanel);
+    leftScrollPane =
+        new JScrollPane(
+            leftPanel,
+            JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     leftScrollPane.getViewport().addChangeListener(e -> loadImage((JViewport) e.getSource()));
     splitPane.setLeftComponent(leftScrollPane);
     splitPane.setRightComponent(viewPanel);
@@ -194,7 +198,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
         continue;
       }
       breakFlag = true;
-      if (radio.getIcon() != null && radio.getIcon().getIconWidth() == viewRect.width) {
+      if (radio.getIcon() != null && radio.getIcon().getIconWidth() == (viewRect.width - 12)) {
         continue;
       }
       try {
@@ -416,13 +420,24 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
 
   void scrollToCenter(JRadioButton radio) {
     var viewport = leftScrollPane.getViewport();
-    var viewRect = viewport.getSize();
+    var viewRect = viewport.getViewRect();
     var componentRect = radio.getBounds();
-    var newY = componentRect.y - (viewRect.height - componentRect.height) / 2;
-    if (newY < 0) {
-      newY = 0;
+    if (componentRect.y >= viewRect.y
+        && componentRect.y + componentRect.height > viewRect.y + viewRect.height) {
+      viewport.setViewPosition(
+          new Point(
+              0,
+              viewRect.y
+                  + componentRect.y
+                  + componentRect.height
+                  - (viewRect.y + viewRect.height)
+                  + 2));
     }
-    viewport.setViewPosition(new Point(0, newY));
+    if (componentRect.y + componentRect.height <= viewRect.y + viewRect.height
+        && componentRect.y < viewRect.y) {
+      viewport.setViewPosition(new Point(0, componentRect.y - 2));
+      return;
+    }
   }
 
   void close() {

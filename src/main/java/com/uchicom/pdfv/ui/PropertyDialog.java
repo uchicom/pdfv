@@ -1,5 +1,5 @@
 // (C) 2014 uchicom
-package com.uchicom.pdfv;
+package com.uchicom.pdfv.ui;
 
 import java.awt.Font;
 import java.awt.GridBagConstraints;

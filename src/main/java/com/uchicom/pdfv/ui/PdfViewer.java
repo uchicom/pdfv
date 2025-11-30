@@ -1,5 +1,5 @@
 // (C) 2017 uchicom
-package com.uchicom.pdfv;
+package com.uchicom.pdfv.ui;
 
 import javax.swing.JFrame;
 

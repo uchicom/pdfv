@@ -2,7 +2,7 @@
 package com.uchicom.pdfv.action;
 
 import com.uchicom.pdfv.Constants;
-import com.uchicom.pdfv.ViewFrame;
+import com.uchicom.pdfv.ui.ViewFrame;
 import com.uchicom.pdfv.util.ResourceUtil;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;

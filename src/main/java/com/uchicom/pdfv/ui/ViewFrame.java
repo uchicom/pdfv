@@ -1,6 +1,7 @@
 // (C) 2014 uchicom
-package com.uchicom.pdfv;
+package com.uchicom.pdfv.ui;
 
+import com.uchicom.pdfv.Constants;
 import com.uchicom.pdfv.action.AboutAction;
 import com.uchicom.pdfv.action.FirstAction;
 import com.uchicom.pdfv.action.HelpAction;
@@ -11,8 +12,6 @@ import com.uchicom.pdfv.action.PropertyAction;
 import com.uchicom.pdfv.action.RightAction;
 import com.uchicom.pdfv.action.SaveAction;
 import com.uchicom.pdfv.action.SplitSaveAction;
-import com.uchicom.pdfv.ui.MessageIcon;
-import com.uchicom.pdfv.ui.XorImageIcon;
 import com.uchicom.pdfv.util.ResourceUtil;
 import com.uchicom.ui.FileOpener;
 import com.uchicom.ui.ResumeFrame;
@@ -65,6 +64,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
   private static final long serialVersionUID = 1L;
 
   private PdfImagePanel panel;
+  JScrollPane imageScrollPane;
   private JSlider slider;
   PDDocument document;
   PDFRenderer renderer;
@@ -88,7 +88,8 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
     setTitle(
         ResourceUtil.getString(Constants.APPLICATION_TITLE)
             + " "
-            + ResourceUtil.getString(Constants.APPLICATION_VERSION));
+            + ResourceUtil.getString(Constants.APPLICATION_VERSION)
+            + " 100%");
 
     setJMenuBar(createJMenuBar());
     panel = new PdfImagePanel();
@@ -105,7 +106,15 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
                 // 拡大縮小
                 panel.addRatio(e.getWheelRotation());
                 // 拡大縮小ラベル設定
-                panel.repaint();
+                imageScrollPane.revalidate();
+
+                setTitle(
+                    ResourceUtil.getString(Constants.APPLICATION_TITLE)
+                        + " "
+                        + ResourceUtil.getString(Constants.APPLICATION_VERSION)
+                        + " "
+                        + (int) (panel.getRatioLabel())
+                        + "%");
                 ResourceUtil.debug(e);
               }
             }
@@ -122,7 +131,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
           @Override
           public void stateChanged(ChangeEvent e) {
             int newPage = slider.getValue();
-            panel.setCurrentPage(newPage);
+            panel.setCurrentPage(newPage, document.getPage(newPage));
           }
         });
     // slider.setPaintLabels(true);
@@ -131,7 +140,8 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
 
     var viewPanel = new JPanel();
     viewPanel.setLayout(new BorderLayout());
-    viewPanel.add(new JScrollPane(panel), BorderLayout.CENTER);
+    imageScrollPane = new JScrollPane(panel);
+    viewPanel.add(imageScrollPane, BorderLayout.CENTER);
     viewPanel.add(slider, BorderLayout.SOUTH);
     splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     leftScrollPane =
@@ -206,8 +216,10 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
           var pdPage = document.getPage(count - 1);
           var width = getWidth(pdPage);
           var image = renderer.renderImage(count - 1, (viewRect.width - 12) / width);
+          // System.out.println("renderer.renderImage "+ (count - 1));
           if (radio.getIcon() != null && radio.getIcon().getIconWidth() != viewRect.width) {
             radio.setPreferredSize(getRadioDimension(pdPage, viewRect.width - 12));
+            // System.out.println("ラジオサイズ変更 " + radio.getPreferredSize());
           }
           radio.setIcon(new ImageIcon(image));
           radio.setSelectedIcon(new XorImageIcon(image));
@@ -232,7 +244,9 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
 
   Dimension getRadioDimension(PDPage pdPage, int width) {
     var widthMagnification = getWidthMagnification(pdPage);
-    return new Dimension(width, (int) (width * widthMagnification));
+    var d = new Dimension(width, (int) (width * widthMagnification));
+    // System.out.println("ラジオサイズ計算 " + d);
+    return d;
   }
 
   private JMenuBar createJMenuBar() {
@@ -396,7 +410,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
             new AbstractAction() {
               @Override
               public void actionPerformed(ActionEvent e) {
-                scrollToCenter(radio);
+                scrollToInsideViewRect(radio);
                 SwingUtilities.invokeLater(() -> show(j));
               }
             });
@@ -406,7 +420,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
         gbc.gridy++;
       }
       setSize(max);
-      panel.setCurrentPage(panel.getCurrentPage());
+      panel.setCurrentPage(0, document.getPage(0));
       pack();
       loadImage(leftScrollPane.getViewport());
 
@@ -414,11 +428,9 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
       e1.printStackTrace();
       JOptionPane.showMessageDialog(this, e1.getMessage());
     }
-
-    System.gc();
   }
 
-  void scrollToCenter(JRadioButton radio) {
+  void scrollToInsideViewRect(JRadioButton radio) {
     var viewport = leftScrollPane.getViewport();
     var viewRect = viewport.getViewRect();
     var componentRect = radio.getBounds();
@@ -478,7 +490,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
   }
 
   void show(int page) {
-    panel.setCurrentPage(page);
+    panel.setCurrentPage(page, document.getPage(page));
     slider.setValue(page);
   }
 

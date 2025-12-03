@@ -46,9 +46,6 @@ public class PdfImagePanel extends ImagePanel {
   }
 
   public void setCurrentPage(int currentPage, PDPage pdPage) {
-    if (this.currentPage == currentPage) {
-      return;
-    }
     this.currentPage = currentPage;
     this.pdPage = pdPage;
     setCurrentImage();

@@ -76,6 +76,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
   MessageIcon loadingIcon = new MessageIcon("読込中...", Color.RED, 15F, 64, 64);
   MessageIcon errorIcon = new MessageIcon("Error.", Color.RED, 15F, 64, 64);
   JSplitPane splitPane;
+  ButtonGroup buttonGroup = new ButtonGroup();
 
   /** 設定プロパティーファイルの相対パス */
   private static final String CONF_FILE_PATH = "./conf/pdfv.properties";
@@ -382,7 +383,8 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
       panel.setPDFRenderer(renderer);
       int max = document.getNumberOfPages();
       leftPanel.removeAll();
-      var group = new ButtonGroup();
+      buttonGroup.clearSelection();
+      buttonGroup.getElements().asIterator().forEachRemaining(b -> buttonGroup.remove(b));
       var gbc = new GridBagConstraints();
       gbc.gridx = 0;
       gbc.gridy = 0;
@@ -420,15 +422,16 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
                 SwingUtilities.invokeLater(() -> show(j));
               }
             });
-        group.add(radio);
+        buttonGroup.add(radio);
 
         leftPanel.add(radio, gbc);
         gbc.gridy++;
       }
       setSize(max);
-      panel.setCurrentPage(0, document.getPage(0));
+      show(0);
       pack();
       loadImage(leftScrollPane.getViewport());
+      leftPanel.repaint();
 
     } catch (IOException e1) {
       e1.printStackTrace();

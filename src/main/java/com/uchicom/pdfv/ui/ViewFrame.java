@@ -34,6 +34,7 @@ import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -46,6 +47,7 @@ import javax.swing.JSlider;
 import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.JViewport;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -380,7 +382,7 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
       panel.setPDFRenderer(renderer);
       int max = document.getNumberOfPages();
       leftPanel.removeAll();
-      ButtonGroup group = new ButtonGroup();
+      var group = new ButtonGroup();
       var gbc = new GridBagConstraints();
       gbc.gridx = 0;
       gbc.gridy = 0;
@@ -401,9 +403,13 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
           gbc.gridy++;
         }
         final int j = i;
-        JRadioButton radio = new JRadioButton(loadingIcon);
+        var radio = new JRadioButton(loadingIcon);
         if (i == 0) {
           radio.setSelected(true);
+          setStealFocusKey(KeyStroke.getKeyStroke("UP"), radio);
+        }
+        if (i == max - 1) {
+          setStealFocusKey(KeyStroke.getKeyStroke("DOWN"), radio);
         }
         radio.setPreferredSize(getRadioDimension(page, (int) (width - 12)));
         radio.setAction(
@@ -428,6 +434,18 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
       e1.printStackTrace();
       JOptionPane.showMessageDialog(this, e1.getMessage());
     }
+  }
+
+  void setStealFocusKey(KeyStroke keyStroke, JRadioButton radio) {
+    radio.getInputMap(JComponent.WHEN_FOCUSED).put(keyStroke, "moveSelect");
+    radio
+        .getActionMap()
+        .put(
+            "moveSelect",
+            new AbstractAction() {
+              @Override
+              public void actionPerformed(ActionEvent e) {}
+            });
   }
 
   void scrollToInsideViewRect(JRadioButton radio) {

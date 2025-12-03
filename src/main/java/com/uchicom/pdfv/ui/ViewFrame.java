@@ -43,14 +43,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
-import javax.swing.JSlider;
 import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -67,7 +64,6 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
 
   private PdfImagePanel panel;
   JScrollPane imageScrollPane;
-  private JSlider slider;
   PDDocument document;
   PDFRenderer renderer;
   JPanel leftPanel;
@@ -123,21 +119,6 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
             }
           }
         });
-    slider = new JSlider(0, 100, 0);
-    // slider.setInverted(true);
-    slider.setPaintTicks(true);
-    slider.setMinorTickSpacing(1);
-    slider.setMajorTickSpacing(10);
-    slider.addChangeListener(
-        new ChangeListener() {
-
-          @Override
-          public void stateChanged(ChangeEvent e) {
-            int newPage = slider.getValue();
-            panel.setCurrentPage(newPage, document.getPage(newPage));
-          }
-        });
-    // slider.setPaintLabels(true);
     leftPanel = new JPanel();
     leftPanel.setLayout(new GridBagLayout());
 
@@ -145,7 +126,6 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
     viewPanel.setLayout(new BorderLayout());
     imageScrollPane = new JScrollPane(panel);
     viewPanel.add(imageScrollPane, BorderLayout.CENTER);
-    viewPanel.add(slider, BorderLayout.SOUTH);
     splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     leftScrollPane =
         new JScrollPane(
@@ -296,10 +276,6 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
     return currentFile;
   }
 
-  public void setSize(int size) {
-    slider.setMaximum(size - 1);
-  }
-
   public void open() {
     JFileChooser fileChooser = new JFileChooser();
 
@@ -427,7 +403,6 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
         leftPanel.add(radio, gbc);
         gbc.gridy++;
       }
-      setSize(max);
       show(0);
       pack();
       loadImage(leftScrollPane.getViewport());
@@ -512,7 +487,6 @@ public class ViewFrame extends ResumeFrame implements FileOpener {
 
   void show(int page) {
     panel.setCurrentPage(page, document.getPage(page));
-    slider.setValue(page);
   }
 
   public void save() {
